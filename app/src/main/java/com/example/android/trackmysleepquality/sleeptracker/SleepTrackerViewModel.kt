@@ -18,9 +18,12 @@ package com.example.android.trackmysleepquality.sleeptracker
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import com.example.android.trackmysleepquality.database.SleepDatabaseDao
 import com.example.android.trackmysleepquality.database.SleepNight
+import com.example.android.trackmysleepquality.formatNights
 import kotlinx.coroutines.*
 
 /**
@@ -44,6 +47,15 @@ class SleepTrackerViewModel(
 
     private val nights = database.getAllNights()
 
+    private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
+
+    val navigateToSleepNight: LiveData<SleepNight>
+        get() = _navigateToSleepQuality
+
+    val nightsString = Transformations.map(nights) { nights ->
+        formatNights(nights, application.resources)
+    }
+
     init {
         initializeTonight()
     }
@@ -53,12 +65,9 @@ class SleepTrackerViewModel(
         viewModelJob.cancel()
     }
 
-    private fun initializeTonight() {
-        uiScope.launch {
-            tonight.value = getTonightFromDatabase()
-        }
-    }
-
+    /**
+     * suspended function should return Deferred
+     */
     private suspend fun getTonightFromDatabase(): SleepNight? {
         return withContext(Dispatchers.IO) {
             database.getTonight()
@@ -80,6 +89,16 @@ class SleepTrackerViewModel(
     private suspend fun clear() {
         withContext(Dispatchers.IO) {
             database.clear()
+        }
+    }
+
+    /**
+     * The following functions expose database interaction
+     * for clickListener
+     */
+    private fun initializeTonight() {
+        uiScope.launch {
+            tonight.value = getTonightFromDatabase()
         }
     }
 
@@ -109,6 +128,9 @@ class SleepTrackerViewModel(
             oldNight.endTimeMilli = System.currentTimeMillis()
 
             update(oldNight)
+
+            // This alone trigger observable for navigation
+            _navigateToSleepQuality.value = oldNight
         }
     }
 
@@ -124,14 +146,8 @@ class SleepTrackerViewModel(
         }
     }
 
-
-    //TODO 02. Define a scope for the coroutines to run in
-
-    //TODO 03. Create tonight live data var and use a coroutine to initialize it from the database
-    //TODO 04. Get all nights from the database
-    //TODO 05. Add local functions fro insert(), update(), and clear()
-    //TODO 06. Implement click handlers for Start, Stop, and Clear buttons using coroutines to do the
-    // database work
-    //TODO 07. Transfers nights into nightString using formatNights()
+    fun doneNavigating() {
+        _navigateToSleepQuality.value = null
+    }
 }
 
