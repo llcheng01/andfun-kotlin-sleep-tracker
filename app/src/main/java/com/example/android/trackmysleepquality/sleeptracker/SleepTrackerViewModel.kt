@@ -56,6 +56,23 @@ class SleepTrackerViewModel(
         formatNights(nights, application.resources)
     }
 
+    // Snackbar
+    private var _showSnackbarEvent = MutableLiveData<Boolean>()
+    val showSnackbarEvent: LiveData<Boolean>
+        get() = _showSnackbarEvent
+
+    val startButtonVisible = Transformations.map(tonight) {
+        null == it
+    }
+
+    val stopButtonVisible = Transformations.map(tonight) {
+        null != it
+    }
+
+    val clearButtonVisible = Transformations.map(nights) {
+        it?.isNotEmpty()
+    }
+
     init {
         initializeTonight()
     }
@@ -70,7 +87,11 @@ class SleepTrackerViewModel(
      */
     private suspend fun getTonightFromDatabase(): SleepNight? {
         return withContext(Dispatchers.IO) {
-            database.getTonight()
+            var night = database.getTonight()
+            if (night?.endTimeMilli != night?.startTimeMilli) {
+                night = null
+            }
+            night 
         }
     }
 
@@ -144,10 +165,16 @@ class SleepTrackerViewModel(
 
             tonight.value = null
         }
+        // Show a snackbar message, because it's friendly.
+        _showSnackbarEvent.value = true
     }
 
     fun doneNavigating() {
         _navigateToSleepQuality.value = null
+    }
+
+    fun doneShowingSnackbar() {
+        _showSnackbarEvent.value  = false
     }
 }
 
