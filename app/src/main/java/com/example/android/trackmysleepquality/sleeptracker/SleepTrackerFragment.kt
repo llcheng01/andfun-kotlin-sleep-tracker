@@ -17,6 +17,7 @@
 package com.example.android.trackmysleepquality.sleeptracker
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,6 +30,8 @@ import com.example.android.trackmysleepquality.R
 import com.example.android.trackmysleepquality.database.SleepDatabase
 import com.example.android.trackmysleepquality.databinding.FragmentSleepTrackerBinding
 import com.google.android.material.snackbar.Snackbar
+
+private const val TAG = "SleepTrackerFragment"
 
 /**
  * A fragment with buttons to record start and end times for sleep, which are saved in
@@ -78,6 +81,19 @@ class SleepTrackerFragment : Fragment() {
                         Snackbar.LENGTH_SHORT
                 ).show()
                 sleepTrackerViewModel.doneShowingSnackbar()
+            }
+        })
+
+        val adapter = SleepNightAdapter()
+        binding.sleepList.adapter = adapter
+
+        // nights is loaded from database, so add/update/delete would trigger this
+        // binding of data for RecyclerView.adapter
+        sleepTrackerViewModel.nights.observe(viewLifecycleOwner, Observer {
+            Log.i(TAG, "Night data is observed")
+            it?.let {
+                Log.i(TAG, "Passing data to recycler adapter: ${it}")
+                adapter.data = it
             }
         })
 
