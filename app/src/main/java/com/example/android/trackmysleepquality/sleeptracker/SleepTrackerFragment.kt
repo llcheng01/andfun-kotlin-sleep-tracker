@@ -93,7 +93,7 @@ class SleepTrackerFragment : Fragment() {
             Log.i(TAG, "Night data is observed")
             it?.let {
                 Log.i(TAG, "Passing data to recycler adapter: ${it}")
-                adapter.data = it
+                adapter.submitList(it)
             }
         })
 
