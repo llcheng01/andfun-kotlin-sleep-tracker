@@ -41,4 +41,7 @@ interface SleepDatabaseDao {
 
     @Query("DELETE FROM daily_sleep_quality_table")
     fun clear()
+
+    @Query("SELECT * FROM daily_sleep_quality_table WHERE nightId = :key")
+    fun getNightWithId(key: Long): LiveData<SleepNight>
 }
